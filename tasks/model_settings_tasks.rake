@@ -1,4 +1,4 @@
 # desc "Explaining what the task does"
-# task :has_easy do
+# task :model_settings do
 #   # Task goes here
 # end

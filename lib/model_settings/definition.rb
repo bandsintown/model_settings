@@ -1,5 +1,5 @@
 module Izzle
-  module HasEasy
+  module ModelSettings
     class Definition
       
       attr_accessor :name

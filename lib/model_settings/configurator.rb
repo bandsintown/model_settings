@@ -1,5 +1,5 @@
 module Izzle
-  module HasEasy
+  module ModelSettings
     class Configurator
       
       attr_accessor :definitions, :aliases
@@ -20,36 +20,36 @@ module Izzle
       
       def define(name, options = {})
         name = Helpers.normalize(name)
-        raise ArgumentError, "class #{@klass} has_easy('#{@name}') already defines '#{name}'" if @definitions.has_key?(name)
+        raise ArgumentError, "class #{@klass} model_settings('#{@name}') already defines '#{name}'" if @definitions.has_key?(name)
         @definitions[name] = Definition.new(name, options)
       end
       
       def do_metaprogramming_magic_aka_define_methods
         
-        easy_accessors, object_accessors = [], []
+        model_setting_accessors, object_accessors = [], []
         @definitions.values.each do |definition|
           
-          easy_accessors << <<-end_eval
+          model_setting_accessors << <<-end_eval
             def #{@name}_#{definition.name}=(value)
-              set_has_easy_thing('#{@name}', '#{definition.name}', value, true)
+              set_model_setting('#{@name}', '#{definition.name}', value, true)
             end
             def #{@name}_#{definition.name}
-              get_has_easy_thing('#{@name}', '#{definition.name}', true)
+              get_model_setting('#{@name}', '#{definition.name}', true)
             end
             def #{@name}_#{definition.name}?
-              !!get_has_easy_thing('#{@name}', '#{definition.name}', true)
+              !!get_model_setting('#{@name}', '#{definition.name}', true)
             end
           end_eval
           
           object_accessors << <<-end_eval
             def #{definition.name}=(value)
-              proxy_owner.set_has_easy_thing('#{@name}', '#{definition.name}', value)
+              proxy_owner.set_model_setting('#{@name}', '#{definition.name}', value)
             end
             def #{definition.name}
-              proxy_owner.get_has_easy_thing('#{@name}', '#{definition.name}')
+              proxy_owner.get_model_setting('#{@name}', '#{definition.name}')
             end
             def #{definition.name}?
-              !!proxy_owner.get_has_easy_thing('#{@name}', '#{definition.name}')
+              !!proxy_owner.get_model_setting('#{@name}', '#{definition.name}')
             end
           end_eval
         end
@@ -66,15 +66,15 @@ module Izzle
         
         @klass.class_eval <<-end_eval
           # first define the has many relationship
-          has_many :#{@name}, :class_name => 'HasEasyThing',
+          has_many :#{@name}, :class_name => 'ModelSetting',
                               :as => :model,
                               :extend => AssocationExtension,
                               :dependent => :destroy do
             #{object_accessors.join("\n")}
           end
           
-          # now define the easy accessors
-          #{easy_accessors.join("\n")}
+          # now define the model setting accessors
+          #{model_setting_accessors.join("\n")}
           
           # define the aliases
           #{method_aliases.join("\n")}

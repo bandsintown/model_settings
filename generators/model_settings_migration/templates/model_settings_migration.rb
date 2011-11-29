@@ -1,6 +1,6 @@
 class <%= class_name.underscore.camelize %> < ActiveRecord::Migration
   def self.up
-    create_table :has_easy_things do |t|
+    create_table :model_settings do |t|
       t.string  :model_type, :null => false
       t.integer :model_id, :null => false
       t.string  :context
@@ -11,6 +11,6 @@ class <%= class_name.underscore.camelize %> < ActiveRecord::Migration
   end
 
   def self.down
-    drop_table :has_easy_things
+    drop_table :model_settings
   end
 end

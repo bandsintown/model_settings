@@ -1,26 +1,26 @@
 require File.dirname(__FILE__) + '/../../../../test/test_helper'
 
-ActiveRecord::Base.connection.create_table :has_easy_user_tests, :force => true do |t|
+ActiveRecord::Base.connection.create_table :model_settings_user_tests, :force => true do |t|
   t.integer :client_id
 end
 
-ActiveRecord::Base.connection.create_table :has_easy_client_tests, :force => true do
+ActiveRecord::Base.connection.create_table :model_settings_client_tests, :force => true do
 end
 
-HasEasyThing.delete_all
+ModelSetting.delete_all
 
-class HasEasyClientTest < ActiveRecord::Base
-  has_many :users, :class_name => 'HasEasyUserTest', :foreign_key => 'client_id'
-  has_easy :flags do |f|
+class ModelSettingsClientTest < ActiveRecord::Base
+  has_many :users, :class_name => 'ModelSettingsUserTest', :foreign_key => 'client_id'
+  model_settings :flags do |f|
     f.define :default_through_test_1, :default => 'client default'
   end
 end
 
-class HasEasyUserTest < ActiveRecord::Base
-  belongs_to :client, :class_name => 'HasEasyClientTest', :foreign_key => 'client_id'
+class ModelSettingsUserTest < ActiveRecord::Base
+  belongs_to :client, :class_name => 'ModelSettingsClientTest', :foreign_key => 'client_id'
   cattr_accessor :count1, :count2
   @@count1, @@count2 = 0, 0
-  has_easy :preferences, :alias => :prefs do |p|
+  model_settings :preferences, :alias => :prefs do |p|
     p.define :color
     p.define :theme, :type_check => String
     p.define :validate_test_1, :validate => [true, 'true', 1, 't']
@@ -28,7 +28,7 @@ class HasEasyUserTest < ActiveRecord::Base
       [true, 'true', 1, 't'].include?(value)
     }
     p.define :validate_test_3, :validate => Proc.new { |value|
-      raise HasEasy::ValidationError unless [true, 'true', 1, 't'].include?(value)
+      raise ModelSettings::ValidationError unless [true, 'true', 1, 't'].include?(value)
     }
     p.define :validate_test_4, :validate => :validate_test_4
     p.define :preprocess_test_1, :preprocess => Proc.new { |value| [true, 'true', 1, 't'].include?(value) ? true : false }
@@ -38,7 +38,7 @@ class HasEasyUserTest < ActiveRecord::Base
                                :preprocess => Proc.new{ |value| value == 'true' },
                                :postprocess => Proc.new{ |value| value ? 'true' : 'false' }
   end
-  has_easy :flags do |f|
+  model_settings :flags do |f|
     f.define :admin
     f.define :default_test_1, :default => 'funky town'
     f.define :default_through_test_1, :default => 'user default', :default_through => :client
@@ -56,63 +56,63 @@ class HasEasyUserTest < ActiveRecord::Base
   end
 end
 
-class HasEasyTest < Test::Unit::TestCase
+class ModelSettingsTest < Test::Unit::TestCase
   
   def setup
-    @client = HasEasyClientTest.create
+    @client = ModelSettingsClientTest.create
     @user = @client.users.create!
   end
   
   def test_setter_getter
-    @user.set_has_easy_thing(:preferences, :color, 'red')
-    assert_equal 'red', @user.get_has_easy_thing(:preferences, :color)
-    assert_equal 1, HasEasyThing.count(:conditions => { :model_type => @user.class.name, :model_id => @user.id })
+    @user.set_model_setting(:preferences, :color, 'red')
+    assert_equal 'red', @user.get_model_setting(:preferences, :color)
+    assert_equal 1, ModelSetting.count(:conditions => { :model_type => @user.class.name, :model_id => @user.id })
     
-    @user.set_has_easy_thing(:flags, :admin, true)
-    assert_equal true, @user.get_has_easy_thing(:flags, :admin)
-    assert_equal 2, HasEasyThing.count(:conditions => { :model_type => @user.class.name, :model_id => @user.id })
+    @user.set_model_setting(:flags, :admin, true)
+    assert_equal true, @user.get_model_setting(:flags, :admin)
+    assert_equal 2, ModelSetting.count(:conditions => { :model_type => @user.class.name, :model_id => @user.id })
   end
   
   def test_array_access
     @user.preferences[:color] = 'red'
     assert_equal 'red', @user.preferences[:color]
-    assert_equal 1, HasEasyThing.count(:conditions => { :model_type => @user.class.name, :model_id => @user.id })
+    assert_equal 1, ModelSetting.count(:conditions => { :model_type => @user.class.name, :model_id => @user.id })
     
     @user.flags[:admin] = true
     assert_equal true, @user.flags[:admin]
-    assert_equal 2, HasEasyThing.count(:conditions => { :model_type => @user.class.name, :model_id => @user.id })
+    assert_equal 2, ModelSetting.count(:conditions => { :model_type => @user.class.name, :model_id => @user.id })
   end
   
   def test_object_access
     @user.preferences.color = 'red'
     assert_equal 'red', @user.preferences.color
-    assert_equal 1, HasEasyThing.count(:conditions => { :model_type => @user.class.name, :model_id => @user.id })
+    assert_equal 1, ModelSetting.count(:conditions => { :model_type => @user.class.name, :model_id => @user.id })
     
     @user.flags.admin = true
     assert_equal true, @user.flags.admin
-    assert_equal 2, HasEasyThing.count(:conditions => { :model_type => @user.class.name, :model_id => @user.id })
+    assert_equal 2, ModelSetting.count(:conditions => { :model_type => @user.class.name, :model_id => @user.id })
   end
   
   def test_easy_access
     @user.preferences_color = 'red'
     assert_equal 'red', @user.preferences_color
     assert_equal true, @user.preferences_color?
-    assert_equal 1, HasEasyThing.count(:conditions => { :model_type => @user.class.name, :model_id => @user.id })
+    assert_equal 1, ModelSetting.count(:conditions => { :model_type => @user.class.name, :model_id => @user.id })
     
     @user.flags_admin = true
     assert_equal true, @user.flags_admin
     assert_equal true, @user.flags_admin?
-    assert_equal 2, HasEasyThing.count(:conditions => { :model_type => @user.class.name, :model_id => @user.id })
+    assert_equal 2, ModelSetting.count(:conditions => { :model_type => @user.class.name, :model_id => @user.id })
   end
   
   def test_overwrite
     @user.preferences[:color] = 'red'
     assert_equal 'red', @user.preferences[:color]
-    assert_equal 1, HasEasyThing.count(:conditions => { :model_type => @user.class.name, :model_id => @user.id })
+    assert_equal 1, ModelSetting.count(:conditions => { :model_type => @user.class.name, :model_id => @user.id })
     
     @user.preferences[:color] = 'blue'
     assert_equal 'blue', @user.preferences[:color]
-    assert_equal 1, HasEasyThing.count(:conditions => { :model_type => @user.class.name, :model_id => @user.id })
+    assert_equal 1, ModelSetting.count(:conditions => { :model_type => @user.class.name, :model_id => @user.id })
   end
   
   def test_alias
@@ -192,7 +192,7 @@ class HasEasyTest < Test::Unit::TestCase
     assert '2two', @user.errors.on(:preferences)[1]
   end
   
-  def test_validate_4_has_easy_errors_added_to_base
+  def test_validate_4_model_settings_errors_added_to_base
     @user.preferences.validate_test_4 = "blah"
     @user.preferences.save
     @preference = @user.preferences.detect { |pref|  !pref.errors.empty? }
@@ -226,17 +226,17 @@ class HasEasyTest < Test::Unit::TestCase
   end
   
   def test_default_1
-    assert_equal 'funky town', HasEasyUserTest.new.flags.default_test_1
+    assert_equal 'funky town', ModelSettingsUserTest.new.flags.default_test_1
     assert_equal 'funky town', @user.flags.default_test_1
     @user.flags.default_test_1 = "stupid town"
     assert_equal "stupid town", @user.flags.default_test_1
     @user.flags.save
-    @user = HasEasyUserTest.find(@user.id)
+    @user = ModelSettingsUserTest.find(@user.id)
     assert_equal "stupid town", @user.flags.default_test_1
   end
   
   def test_default_though_1
-    client = HasEasyClientTest.create
+    client = ModelSettingsClientTest.create
     user = client.users.create
     assert_equal 'client default', user.flags.default_through_test_1
     
@@ -248,7 +248,7 @@ class HasEasyTest < Test::Unit::TestCase
     user.flags.default_through_test_1 = 'not user default'
     assert_equal 'not user default', user.flags.default_through_test_1
     
-    assert_equal 'user default', HasEasyUserTest.new.flags.default_through_test_1
+    assert_equal 'user default', ModelSettingsUserTest.new.flags.default_through_test_1
   end
   
   def test_default_dynamic_1
@@ -261,13 +261,13 @@ class HasEasyTest < Test::Unit::TestCase
     assert_equal 2, @user.flags.default_dynamic_test_2
   end
   
-  # This is from a bug that swalterd found that has to do with how has_easy assigns default values.
+  # This is from a bug that swalterd found that has to do with how model_settings assigns default values.
   # Each thing shares the same default value, so changing it for one will change it for everyone.
-  # The fix is to clone (if possible) the default value when a new HasEasyThing is created.
+  # The fix is to clone (if possible) the default value when a new ModelSetting is created.
   def test_default_reference
     v = @user.flags.default_reference[0]
     @user.flags.default_reference[0] = rand(10) + 10
-    new_user = HasEasyUserTest.new
+    new_user = ModelSettingsUserTest.new
     assert_equal v, new_user.flags_default_reference[0]
   end
   

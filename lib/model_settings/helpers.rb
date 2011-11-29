@@ -1,5 +1,5 @@
 module Izzle
-  module HasEasy
+  module ModelSettings
     module Helpers
     
       def self.normalize(s)

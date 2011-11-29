@@ -3,21 +3,21 @@ Easy access and creation of "has many" relationships.
 What's the difference between flags, preferences and options?  Nothing really, they are just "has many" relationships.  So why should I install a separate plugin for each one?  This plugin can be used to add preferences, flags, options, etc to any model.
 
 ==Installation
- git clone git://github.com/cjbottaro/has_easy.git vendor/plugins/has_easy
- script/generate has_easy_migration create_has_easy_things
+ git clone git://github.com/cjbottaro/model_settings.git vendor/plugins/model_settings
+ script/generate model_settings_migration create_model_settings
  rake db:migrate
  rake db:test:prepare
- cd vendor/plugins/has_easy
+ cd vendor/plugins/model_settings
  rake test
 
 ==Example
 
  class User < ActiveRecord::Base
-   has_easy :preferences do |p|
+   model_settings :preferences do |p|
      p.define :color
      p.define :theme
    end
-   has_easy :flags do |f|
+   model_settings :flags do |f|
      f.define :is_admin
      f.define :is_spammer
    end
@@ -50,7 +50,7 @@ What's the difference between flags, preferences and options?  Nothing really, t
 
 
 ==Advanced Usage
-There are a lot of options that you can use with has_easy:
+There are a lot of options that you can use with model_settings:
 * aliasing
 * default values
 * inheriting default values from parent associations
@@ -61,12 +61,12 @@ There are a lot of options that you can use with has_easy:
 In this section, we'll go over how to use each option and explain why it's useful.
 
 ===:alias and :aliases
-These options go on the has_easy method call and specify alternate ways of invoking the association.
+These options go on the model_settings method call and specify alternate ways of invoking the association.
   class User < ActiveRecord::Base
-    has_easy :preferences, :aliases => [:prefs, :options] do |p|
+    model_settings :preferences, :aliases => [:prefs, :options] do |p|
       p.define :likes_cheese
     end
-    has_easy :flags, :alias => :status do |p|
+    model_settings :flags, :alias => :status do |p|
       p.define :is_admin
     end
   end
@@ -81,7 +81,7 @@ These options go on the has_easy method call and specify alternate ways of invok
 ===:default
 Very simple.  It does what you think it does.
  class User < ActiveRecord::Base
-   has_easy :options do |p|
+   model_settings :options do |p|
      p.define :gender, :default => 'female'
    end
  end
@@ -92,13 +92,13 @@ Very simple.  It does what you think it does.
 Allows the model to inherit it's default value from an association.
  class Client < ActiveRecord::Base
    has_many :users
-   has_easy :options do |p|
+   model_settings :options do |p|
      p.define :gender, :default => 'male'
    end
  end
  class User < ActiveRecord::Base
    belongs_to :client
-   has_easy :options do |p|
+   model_settings :options do |p|
      p.define :gender, :default_through => :client, :default => 'female'
    end
  end
@@ -118,7 +118,7 @@ Allows the model to inherit it's default value from an association.
 ===:default_dynamic
 Allows for calculated default values.
   class User < ActiveRecord::Base
-    has_easy 'prefs' do |t|
+    model_settings 'prefs' do |t|
       t.define :likes_cheese, :default_dynamic => :defaults_to_like_cheese
       t.define :is_dumb, :default_dynamic => Proc.new{ |user| user.dumb_post_count > 10 }
     end
@@ -144,7 +144,7 @@ Allows for calculated default values.
 ===:type_check
 Allows type checking of values (for people who are into that).
   class User < ActiveRecord::Base
-    has_easy :prefs do |p|
+    model_settings :prefs do |p|
       p.define :theme, :type_check => String
       p.define :dollars, :type_check => [Fixnum, Bignum]
     end
@@ -152,21 +152,21 @@ Allows type checking of values (for people who are into that).
 
   user.prefs.theme = 123
   user.prefs.save! # ActiveRecord::InvalidRecord exception raised with message like:
-                   # 'theme' for has_easy('prefs') failed type check
+                   # 'theme' for model_settings('prefs') failed type check
 
   user.prefs.dollars = "hello world"
   user.prefs.save
   user.errors.empty? # => false
-  user.errors.on(:prefs) # => 'dollars' for has_easy('prefs') failed type check
+  user.errors.on(:prefs) # => 'dollars' for model_settings('prefs') failed type check
 
 
 ===:validate
 Make sure that values fit some kind of criteria.  If you use a Proc or name a method with a Symbol to do validation, there are three ways to specify failure:
 1. return false
-2. raise a HasEasy::ValidationError
+2. raise a ModelSettings::ValidationError
 3. return an array of custom validation error messages
   class User < ActiveRecord::Base
-    has_easy :prefs do |p|
+    model_settings :prefs do |p|
       p.define :foreground, :validate => ['red', 'blue', 'green']
       p.define :background, :validate => Proc.new{ |value| %w[black white grey].include?(value) }
       p.define :midground,  :validate => :midground_validator
@@ -178,12 +178,12 @@ Make sure that values fit some kind of criteria.  If you use a Proc or name a me
 
   user.prefs.foreground = 'yellow'
   user.prefs.save! # ActiveRecord::InvalidRecord exception raised with message like:
-                   # 'theme' for has_easy('prefs') failed validation
+                   # 'theme' for model_settings('prefs') failed validation
 
   user.prefs.background = "pink"
   user.prefs.save
   user.errors.empty? => false
-  user.errors.on(:prefs) => 'background' for has_easy('prefs') failed validation
+  user.errors.on(:prefs) => 'background' for model_settings('prefs') failed validation
   
   user.prefs.midground = "black"
   user.prefs.save
@@ -194,7 +194,7 @@ Make sure that values fit some kind of criteria.  If you use a Proc or name a me
 ===:preprocess
 Alter the value before it goes through type checking and/or validation.  This is useful when working with forms and boolean values.  CAREFUL!!  This option only applies to the underscore accessors, i.e. <tt>prefs_likes_cheese=</tt>, not <tt>prefs.likes_cheese=</tt> or <tt>prefs[:likes_cheese]=</tt>.
   class User < ActiveRecord::Base
-    has_easy :prefs do |p|
+    model_settings :prefs do |p|
       p.define :likes_cheese, :validate => [true, false],
                               :preprocess => Proc.new{ |value| ['true', 'yes'].include?(value) ? true : false }
     end
@@ -214,7 +214,7 @@ Alter the value before it goes through type checking and/or validation.  This is
 ===:postprocess
 Alter the value when it is read.  This is useful when working with forms and boolean values.  CAREFUL!!  This option only applies to the underscore accessors, i.e. <tt>prefs_likes_cheese</tt>, not <tt>prefs.likes_cheese</tt> or <tt>prefs[:likes_cheese]</tt>.
   class User < ActiveRecord::Base
-    has_easy :prefs do |p|
+    model_settings :prefs do |p|
       p.define :likes_cheese, :validate => [true, false],
                               :postprocess => Proc.new{ |value| value ? 'yes' : 'no' }
     end
@@ -227,12 +227,12 @@ Alter the value when it is read.  This is useful when working with forms and boo
   => 'yes'
 
 ==Using with Forms
-Suppose you have a <tt>has_easy</tt> field defined as a boolean and you want to use it with a checkbox in <tt>form_for</tt>.
+Suppose you have a <tt>model_settings</tt> field defined as a boolean and you want to use it with a checkbox in <tt>form_for</tt>.
 
   (model)
 
   class User < ActiveRecord::Base
-    has_easy :prefs do |p|
+    model_settings :prefs do |p|
       p.define :likes_cheese, :type_check => [TrueClass, FalseClass],
                               :preprocess => Proc.new{ |value| value == 'yes' },
                               :postprocess => Proc.new{ |value| value ? 'yes' : 'no' }
@@ -261,7 +261,7 @@ The general idea is that we make the form use <tt>prefs_likes_cheese=</tt> and <
 ===Autovivification
 For when we want to use fields without having to define them first.
   class User < ActiveRecord::Base
-    has_easy :prefs, :autovivify => true do |p|
+    model_settings :prefs, :autovivify => true do |p|
       p.define :likes_cheese, :default => 'yes'
     end
   end
@@ -275,7 +275,7 @@ For when we want to use fields without having to define them first.
 ===Scoping to other models
 Ehh, can't think of a way to describe this other than example.  Also, the syntax is completely up in the air, there are so many different ways to do it, I have no idea which way to go with.  Please tell me your ideas.
   class User < ActiveRecord::Base
-    has_easy :prefs do |p|
+    model_settings :prefs do |p|
       p.define :subscribed, :scoped => Post
       p.define :color, :scoped => [Car, Motorcycle] # polymorphic but must be Car or Motorcycle
       p.define :hair_color, :scoped => true # polymorphic no restrictions

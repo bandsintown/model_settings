@@ -1,2 +1,2 @@
-require 'has_easy'
-ActiveRecord::Base.send(:include, Izzle::HasEasy)
+require 'model_settings'
+ActiveRecord::Base.send(:include, Izzle::ModelSettings)

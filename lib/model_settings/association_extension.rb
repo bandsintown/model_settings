@@ -1,5 +1,5 @@
 module Izzle
-  module HasEasy
+  module ModelSettings
     module AssocationExtension
       
       def save
@@ -11,11 +11,11 @@ module Izzle
       end
       
       def []=(name, value)
-        proxy_owner.set_has_easy_thing(proxy_reflection.name, name, value)
+        proxy_owner.set_model_setting(proxy_reflection.name, name, value)
       end
       
       def [](name)
-        proxy_owner.get_has_easy_thing(proxy_reflection.name, name)
+        proxy_owner.get_model_setting(proxy_reflection.name, name)
       end
       
       def valid?

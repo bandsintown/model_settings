@@ -1,13 +1,13 @@
-require 'has_easy/association_extension'
-require 'has_easy/configurator'
-require 'has_easy/definition'
-require 'has_easy/errors'
-require 'has_easy/helpers'
-require 'has_easy_thing'
+require 'model_settings/association_extension'
+require 'model_settings/configurator'
+require 'model_settings/definition'
+require 'model_settings/errors'
+require 'model_settings/helpers'
+require 'model_setting'
 
 module Izzle
   
-  module HasEasy
+  module ModelSettings
     
     def self.included(klass)
       klass.extend ClassMethods
@@ -16,47 +16,47 @@ module Izzle
     
     module ClassMethods
       
-      def has_easy(context = nil, options = {})
+      def model_settings(context = nil, options = {})
         context = Helpers.normalize(context)
         
         # initialize the class instance var to hold our configuration info
         class << self
-          attr_accessor :has_easy_configurators unless method_defined?(:has_easy_configurators)
+          attr_accessor :model_settings_configurators unless method_defined?(:model_settings_configurators)
         end
-        self.has_easy_configurators = {} if self.has_easy_configurators.nil?
+        self.model_settings_configurators = {} if self.model_settings_configurators.nil?
         
         # don't let the user redefine a context
-        raise ArgumentError, "class #{self} already has_easy('#{context}')" if self.has_easy_configurators.has_key?(context)
+        raise ArgumentError, "class #{self} already model_settings('#{context}')" if self.model_settings_configurators.has_key?(context)
         
         
         
         configurator = Configurator.new(self, context, options)
         yield configurator
         configurator.do_metaprogramming_magic_aka_define_methods
-        has_easy_configurators[context] = configurator
+        model_settings_configurators[context] = configurator
       end
       
     end
     
     module InstanceMethods
       
-      def set_has_easy_thing(context, name, value, do_preprocess = false)
+      def set_model_setting(context, name, value, do_preprocess = false)
         context = Helpers.normalize(context)
         name = Helpers.normalize(name)
         
-        # TODO dry this shit out, it's a copy/paste job with get_has_easy_thing
+        # TODO dry this shit out, it's a copy/paste job with get_model_setting
         
         # check to make sure the context exists
-        raise ArgumentError, "has_easy('#{context}') is not defined for class #{self.class}" \
-          unless self.class.has_easy_configurators.has_key?(context)
-        configurator = self.class.has_easy_configurators[context]
+        raise ArgumentError, "model_settings('#{context}') is not defined for class #{self.class}" \
+          unless self.class.model_settings_configurators.has_key?(context)
+        configurator = self.class.model_settings_configurators[context]
         
         # check to make sure the name of the thing exists
-        raise ArgumentError, "'#{name}' not defined for has_easy('#{context}') for class #{self.class}" \
+        raise ArgumentError, "'#{name}' not defined for model_settings('#{context}') for class #{self.class}" \
           unless configurator.definitions.has_key?(name)
         definition = configurator.definitions[name]
         
-        # do preprocess here, type_check and validate can be done as AR validation in HasEasyThing
+        # do preprocess here, type_check and validate can be done as AR validation in ModelSetting
         value = definition.preprocess.call(value) if do_preprocess and definition.has_preprocess
         
         # invoke the assocation
@@ -65,7 +65,7 @@ module Izzle
         # if thing already exists, update it, otherwise add a new one
         thing = things.detect{ |thing| thing.name == name }
         if thing.blank?
-          thing = HasEasyThing.new :context => context,
+          thing = ModelSetting.new :context => context,
                                    :name => name,
                                    :value => value
           thing.set_model_target(self) # for the bug regarding thing's validation trying to invoke the 'model' assocation when self is a new record
@@ -78,17 +78,17 @@ module Izzle
         
       end
       
-      def get_has_easy_thing(context, name, do_postprocess = false)
+      def get_model_setting(context, name, do_postprocess = false)
         context = Helpers.normalize(context)
         name = Helpers.normalize(name)
         
         # check to make sure the context exists
-        raise ArgumentError, "has_easy('#{context}') is not defined for class #{self.class}" \
-          unless self.class.has_easy_configurators.has_key?(context)
-        configurator = self.class.has_easy_configurators[context]
+        raise ArgumentError, "model_settings('#{context}') is not defined for class #{self.class}" \
+          unless self.class.model_settings_configurators.has_key?(context)
+        configurator = self.class.model_settings_configurators[context]
         
         # check to make sure the name of the thing exists
-        raise ArgumentError, "'#{name}' not defined for has_easy('#{context}') for class #{self.class}" \
+        raise ArgumentError, "'#{name}' not defined for model_settings('#{context}') for class #{self.class}" \
           unless configurator.definitions.has_key?(name)
         definition = configurator.definitions[name]
         

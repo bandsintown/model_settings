@@ -10,4 +10,4 @@
 * added support for custom validation error messages
 
 06/18/2008
-* added :alias and :aliases options to has_easy
+* added :alias and :aliases options to model_settings

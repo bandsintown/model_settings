@@ -25,7 +25,8 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'shoulda-matchers', '~> 1.0.0'
   spec.add_development_dependency 'fivemat'
   spec.add_development_dependency 'pry', '=0.9.12.6'
-  spec.add_development_dependency 'activerecord', '=2.3.18'
-  spec.add_development_dependency 'activesupport', '=2.3.18'
+  spec.add_development_dependency 'activerecord', '=3.2'
+  spec.add_development_dependency 'activesupport', '=3.2'
   spec.add_development_dependency('sqlite3')
+  spec.add_development_dependency('database_cleaner', '~> 0.9.0')
 end
